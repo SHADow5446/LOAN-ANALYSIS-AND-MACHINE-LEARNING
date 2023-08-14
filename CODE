@@ -1,0 +1,148 @@
+#imports
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
+import numpy as np
+import seaborn as sns
+#Load data
+df_loan = pd.read_csv('/content/loan.csv')
+df_loan.head()
+
+#display maximum columns
+pd.set_option('display.max_columns', None)
+df_loan.head()
+
+#check categorical values
+obj = (df_1.dtypes == 'objects')
+print('categorical_values :',len(list(obj[obj].index)))
+
+#drop data that contain null values and unrelated info.
+df_1.drop(['id','member_id','funded_amnt_inv','installment','sub_grade','emp_title','emp_length','home_ownership',
+          'issue_d','pymnt_plan','url','desc','title','zip_code','addr_state','dti','delinq_2yrs','earliest_cr_line',
+          'inq_last_6mths','mths_since_last_delinq','mths_since_last_record','open_acc','pub_rec','revol_bal',
+          'revol_util','total_acc','initial_list_status','out_prncp','out_prncp_inv','total_pymnt','total_pymnt_inv','total_rec_int',
+          'total_rec_late_fee','recoveries','collection_recovery_fee','last_pymnt_d','last_pymnt_amnt','next_pymnt_d',
+          'last_credit_pull_d','collections_12_mths_ex_med','mths_since_last_major_derog','policy_code','application_type',
+          'annual_inc_joint','dti_joint','verification_status_joint','acc_now_delinq','tot_coll_amt','tot_cur_bal',
+          'open_acc_6m','open_il_6m','open_il_12m','open_il_24m','mths_since_rcnt_il','total_bal_il','il_util',
+          'open_rv_12m','open_rv_24m','max_bal_bc','all_util','total_rev_hi_lim','inq_fi','total_cu_tl','inq_last_12m',
+          'acc_open_past_24mths','avg_cur_bal','bc_open_to_buy','bc_util','chargeoff_within_12_mths','delinq_amnt','mo_sin_old_il_acct','mo_sin_old_rev_tl_op',
+          'mo_sin_rcnt_rev_tl_op','mo_sin_rcnt_tl','mort_acc','mths_since_recent_bc','mths_since_recent_bc_dlq','mths_since_recent_inq',
+          'mths_since_recent_revol_delinq','num_accts_ever_120_pd','num_actv_bc_tl','num_actv_rev_tl','num_bc_sats','num_bc_tl',
+          'num_il_tl','num_op_rev_tl','num_rev_accts','num_rev_tl_bal_gt_0','num_sats','num_tl_120dpd_2m','num_tl_30dpd',
+          'num_tl_90g_dpd_24m','num_tl_op_past_12m','pct_tl_nvr_dlq','percent_bc_gt_75','pub_rec_bankruptcies','tax_liens',
+          'tot_hi_cred_lim','total_bal_ex_mort','total_bc_limit','total_il_high_credit_limit'], axis=1, inplace=True)
+df_1.drop(['total_rec_prncp'],axis=1,inplace=True)
+
+#columns_needed = loan_status
+#loan_amnt
+#term
+#verfication_status
+#purpose
+#int_rate
+#grade
+#annual_inc
+#funded_amnt
+#check remaining columns
+df_1.head()
+#plot all columns catagorical values
+obj = (df_1.dtypes == 'object')
+object_cols = list(obj[obj].index)
+plt.figure(figsize=(40,70))
+index = 1
+
+for col in object_cols:
+  y = df_1[col].value_counts()
+  plt.subplot(11,4,index)
+  plt.xticks(rotation=90)
+  sns.barplot(x=list(y.index), y=y)
+  index +=1
+# Import label encoder
+from sklearn import preprocessing
+
+label_encoder = preprocessing.LabelEncoder()
+obj = (df_1.dtypes == 'object')
+for col in list(obj[obj].index):
+  df_1[col] = label_encoder.fit_transform(df_1[col])
+
+#check categorical values again
+obj = (df_1.dtypes == 'object')
+print("Categorical variables:",len(list(obj[obj].index)))
+
+#plot heatmap 
+plt.figure(figsize=(12,6))
+
+sns.heatmap(df_1.corr(),cmap='BrBG',fmt='.2f',
+            linewidths=2,annot=True)
+#check null values
+for col in df_1.columns:
+  df_1[col] = df_1[col].fillna(df_1[col].mean())
+
+df_1.isna().sum()
+#train set and test set
+X = df_1.drop(['loan_status'],axis=1)
+Y = df_1['loan_status']
+X.shape,Y.shape
+
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y,
+                                                    test_size=0.4,
+                                                    random_state=1)
+X_train.shape, X_test.shape, Y_train.shape, Y_test.shape
+#deploy classifiers
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import SVC #support vector classifier
+from sklearn.linear_model import LogisticRegression
+
+from sklearn import metrics
+
+knn = KNeighborsClassifier(n_neighbors=3)
+rfc = RandomForestClassifier(n_estimators = 7,
+                             criterion = 'entropy',
+                             random_state =7)
+svc = SVC()
+lc = LogisticRegression()
+
+# making predictions on the training set
+for clf in (rfc, knn, svc,lc):
+    clf.fit(X_train, Y_train)
+    Y_pred = clf.predict(X_train)
+    print("Accuracy score of ",
+          clf.__class__.__name__,
+          "=",100*metrics.accuracy_score(Y_train,
+                                         Y_pred))
+# making predictions on the testing set
+for clf in (rfc, knn, svc,lc):
+    clf.fit(X_train, Y_train)
+    Y_pred = clf.predict(X_test)
+    print("Accuracy score of ",
+          clf.__class__.__name__,"=",
+          100*metrics.accuracy_score(Y_test,
+                                     Y_pred))
+#check important feature 
+#RandomForestClassifer
+from sklearn.model_selection import RandomizedSearchCV
+rf_param_grid = {
+    'n_estimators' : range(1,1000,100),
+}
+rf = RandomForestClassifier(n_estimators = 7,
+                             criterion = 'entropy',
+                             random_state =7)
+
+rf_random = RandomizedSearchCV(param_distributions=rf_param_grid,
+                                 estimator=rf,scoring='accuracy',
+                                 verbose=0,n_iter=10,cv=4)
+rf_random.fit(X_train, Y_train)
+best_params = rf_random.best_params_
+print(f'best parameter: {best_params}')
+#function
+def feature_imp(df_1,model):
+  feat = pd.DataFrame(columns=['feature','importance'])
+  feat['feature'] = df_1.columns
+  feat['importance'] = model.best_estimator_.feature_importances_
+  return feat.sort_values(by='importance', ascending=False)
+#plot
+feature_imp(X_train, rf_random).plot('feature','importance','barh',
+                                 figsize=(10,7))
+#here you can see loan_amnt is the most important feature that influence finial decision
